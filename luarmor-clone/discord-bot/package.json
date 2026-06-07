@@ -1,0 +1,19 @@
+{
+  "name": "luarmor-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord Bot for Luarmor License Management",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "nodemon bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.0.3",
+    "axios": "^1.4.0",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

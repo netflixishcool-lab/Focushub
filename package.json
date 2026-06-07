@@ -1,0 +1,31 @@
+{
+  "name": "focushub-admin-panel",
+  "version": "1.0.0",
+  "description": "Professional Developer Admin Panel with HWID & Discord Bot",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "discord": "node backend/discord-bot.js",
+    "dev-all": "concurrently npm:dev npm:discord"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.0.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "discord.js": "^14.7.1",
+    "crypto-js": "^4.1.1",
+    "axios": "^1.4.0",
+    "dotenv": "^16.0.3",
+    "express-rate-limit": "^6.7.0",
+    "uuid": "^9.0.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "concurrently": "^8.0.1"
+  }
+}

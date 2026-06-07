@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply transition-colors duration-200;
+}
+
+body {
+  @apply bg-luarmor-darker text-white font-sans;
+}
+
+.card {
+  @apply bg-luarmor-dark rounded-lg p-6 border border-gray-800 hover:border-gray-700;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+}
+
+.btn-primary {
+  @apply bg-luarmor-primary text-white hover:bg-blue-600;
+}
+
+.btn-secondary {
+  @apply bg-luarmor-secondary text-white hover:bg-purple-600;
+}
+
+.btn-danger {
+  @apply bg-luarmor-danger text-white hover:bg-red-600;
+}
+
+.input {
+  @apply bg-luarmor-dark border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-luarmor-primary;
+}
+
+.table {
+  @apply w-full bg-luarmor-dark rounded-lg overflow-hidden;
+}
+
+.table thead {
+  @apply bg-luarmor-darker border-b border-gray-700;
+}
+
+.table th {
+  @apply px-6 py-4 text-left text-sm font-semibold;
+}
+
+.table td {
+  @apply px-6 py-4 border-b border-gray-800;
+}

@@ -2,10 +2,10 @@ import express from 'express';
 
 const router = express.Router();
 
-// GET: Roblox Loader Script
+// GET: Roblox Loader Script - lädt das Script basierend auf Script Key
 router.get('/loader.lua', (req, res) => {
   try {
-    const scriptKey = req.query.script_key || '';
+    const scriptKey = req.query.key || '';
     
     // Einfacher Test-Script der "Hallo hier ist FocusHub" ausgibt
     const luaScript = `-- FocusHub Roblox Loader

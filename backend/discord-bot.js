@@ -62,10 +62,9 @@ client.on('interactionCreate', async (interaction) => {
           discordTag: interaction.user.tag
         });
         
-        // Script-Text zurückgeben (Vorschau im Embed, komplettes Script per DM)
+        // Script-Loader-Code (kleiner, sauberer Code)
         const scriptKey = response.data.script.scriptKey;
-        const scriptContent = response.data.script.scriptContent || '';
-        const preview = scriptContent.length > 600 ? scriptContent.slice(0, 600) + '...': scriptContent;
+        const loaderCode = `script_key="${scriptKey}";\nloadstring(game:HttpGet("http://localhost:5000/api/files/loader.lua?key=${scriptKey}"))()`;
 
         const successEmbed = new EmbedBuilder()
           .setColor('#00ff00')
@@ -74,16 +73,12 @@ client.on('interactionCreate', async (interaction) => {
             { name: '📝 Benutzer', value: response.data.discordTag, inline: true },
             { name: '⏰ Verfällsdatum', value: new Date(response.data.expiresAt).toLocaleDateString('de-DE'), inline: true },
             { name: '📋 Script Key', value: `\`${scriptKey}\``, inline: false },
-            { name: '🧾 Script (Vorschau)', value: '```lua\n' + preview + '\n```', inline: false }
+            { name: '🧾 Loader Code (Execute im Roblox Executor)', value: '```lua\n' + loaderCode + '\n```', inline: false }
           )
-          .setFooter({ text: 'Das komplette Script wurde dir per DM geschickt (wenn aktiviert).' })
+          .setFooter({ text: 'Kopiere den Code oben und füge ihn im Roblox Executor ein.' })
           .setTimestamp();
 
         await interaction.editReply({ embeds: [successEmbed] });
-        // Sende komplettes Script per DM im Hintergrund (non-blocking)
-        sendScriptToUser(interaction.user, scriptContent).catch(err => {
-          console.error('Script DM Send Error:', err);
-        });
       } catch (error) {
         console.error('Redeem Error:', error.response?.data || error.message);
         const errorEmbed = new EmbedBuilder()

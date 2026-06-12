@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Key, TrendingUp, Activity, Zap, Crown } from 'lucide-react';
+import { Users, Key, TrendingUp, Activity, Crown } from 'lucide-react';
 import { API_URL } from '../config';
 
 const Dashboard = () => {

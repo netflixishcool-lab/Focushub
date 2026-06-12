@@ -10,7 +10,6 @@ const KeyManagement = () => {
   const [notes, setNotes] = useState('');
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(null);
-  const [tick, setTick] = useState(0);
   const [resettingHwid, setResettingHwid] = useState(null);
   const token = localStorage.getItem('token');
 
@@ -28,11 +27,7 @@ const KeyManagement = () => {
     return `${expiry.toLocaleDateString('de-DE')} (${days}d ${hours}h ${minutes}m ${seconds}s)`;
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => setTick(prev => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchKeys(); }, []);
 
   const fetchKeys = async () => {

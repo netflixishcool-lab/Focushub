@@ -6,7 +6,6 @@ const UserManagement = () => {
   const [licenses, setLicenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [tick, setTick] = useState(0);
   const [resettingHwid, setResettingHwid] = useState(null);
   const token = localStorage.getItem('token');
 
@@ -24,11 +23,7 @@ const UserManagement = () => {
     return `${expiry.toLocaleDateString('de-DE')} (${days}d ${hours}h ${minutes}m ${seconds}s)`;
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => setTick(prev => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchLicenses(); }, []);
 
   const fetchLicenses = async () => {

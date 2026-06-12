@@ -46,7 +46,7 @@ export default function ProjectManagement() {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await axios.post(
+      await axios.post(
         `${API_URL}/scripts/projects`,
         formData,
         {

@@ -5,7 +5,7 @@ import { API_URL } from '../config';
 const KeyManagement = () => {
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [count, setCount] = useState(10);
+  const [count, setCount] = useState(1);
   const [duration, setDuration] = useState(30);
   const [notes, setNotes] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -131,7 +131,9 @@ const KeyManagement = () => {
               <label className="block text-sm font-semibold text-slate-200 mb-3">Anzahl</label>
               <input type="number" min="1" max="1000" value={count}
                 onChange={(e) => setCount(parseInt(e.target.value))}
-                className="w-full px-4 py-2 rounded" />
+                className="w-full px-4 py-2 rounded"
+                style={{ MozAppearance: 'textfield' }}
+                onWheel={(e) => e.target.blur()} />
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-200 mb-3">Dauer (Tage)</label>

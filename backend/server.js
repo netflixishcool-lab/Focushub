@@ -21,7 +21,28 @@ const PORT = process.env.PORT || 5000;
 
 // Security Middleware
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }));
+
+// CORS - erlaube Frontend + public API Endpoints (für Roblox Executor, Discord Bot, etc.)
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'https://focushub-production-145e.up.railway.app',
+  process.env.FRONTEND_URL
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Erlaube requests OHNE origin (z.B. Roblox Executor, Curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS nicht erlaubt'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Rate Limiting
 const limiter = rateLimit({

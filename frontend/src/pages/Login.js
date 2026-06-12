@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import { API_URL } from '../config';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ const Login = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -121,14 +122,6 @@ const Login = ({ onLogin }) => {
               )}
             </button>
 
-            {/* Demo Credentials */}
-            <div className="pt-4 border-t border-slate-600/50">
-              <p className="text-xs text-slate-400 text-center mb-2">📝 Demo-Anmeldedaten:</p>
-              <div className="bg-slate-900/50 rounded-lg p-2 text-xs text-slate-300 text-center space-y-1">
-                <p>E-Mail: <span className="text-blue-400 font-mono">admin@focushub.com</span></p>
-                <p>Passwort: <span className="text-blue-400 font-mono">B6A4A7Admin123</span></p>
-              </div>
-            </div>
           </form>
         </div>
 

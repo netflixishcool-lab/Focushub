@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Key, TrendingUp, Activity, Zap, Crown } from 'lucide-react';
+import { API_URL } from '../config';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -8,7 +9,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/dashboard/stats');
+        const response = await fetch(`${API_URL}/dashboard/stats`);
         const data = await response.json();
         setStats(data);
       } catch (error) {

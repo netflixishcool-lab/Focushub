@@ -11,7 +11,8 @@ const client = new Client({
   ]
 });
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.API_URL || 'http://localhost:5000/api';
+const PUBLIC_API_URL = process.env.PUBLIC_API_URL || 'https://focushub-production-145e.up.railway.app/api';
 
 // Hilfsfunktion: Script als DM in 1900-Char-Chunks senden
 async function sendScriptToUser(user, scriptContent) {
@@ -64,7 +65,7 @@ client.on('interactionCreate', async (interaction) => {
         
         // Script-Loader-Code (kleiner, sauberer Code)
         const scriptKey = response.data.script.scriptKey;
-        const loaderCode = `script_key="${scriptKey}";\nloadstring(game:HttpGet("http://localhost:5000/api/files/loader.lua?key=${scriptKey}"))()`;
+        const loaderCode = `script_key="${scriptKey}";\nloadstring(game:HttpGet("${PUBLIC_API_URL}/files/loader.lua?key=${scriptKey}"))()`;
 
         const successEmbed = new EmbedBuilder()
           .setColor('#00ff00')

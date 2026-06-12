@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { API_URL } from './config';
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -17,7 +18,7 @@ const App = () => {
       // Verify token
       const verifyToken = async () => {
         try {
-          const response = await fetch('http://localhost:5000/api/auth/me', {
+          const response = await fetch(`${API_URL}/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.ok) {

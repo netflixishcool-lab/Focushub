@@ -173,7 +173,7 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
   }
 });
 
-// HWID registrieren wenn Script im Spiel ausgeführt wird
+// HWID registrieren / verifizieren wenn Script ausgeführt wird
 router.post('/script/register-hwid', async (req, res) => {
   try {
     const { scriptKey, hwid } = req.body;
@@ -188,22 +188,74 @@ router.post('/script/register-hwid', async (req, res) => {
       return res.status(404).json({ message: 'Script nicht gefunden' });
     }
 
-    // Update HWID und Usage
+    if (!robloxScript.isActive) {
+      return res.status(403).json({ message: 'Script deaktiviert' });
+    }
+
+    if (robloxScript.expiresAt && new Date() > robloxScript.expiresAt) {
+      return res.status(410).json({ message: 'Script abgelaufen' });
+    }
+
+    // HWID-Locking: Wenn bereits eine HWID gesetzt ist, nur gleiche erlauben
+    if (robloxScript.hwid && robloxScript.hwid !== hwid) {
+      return res.status(403).json({ message: 'HWID gesperrt - anderes Gerät' });
+    }
+
     robloxScript.hwid = hwid;
     robloxScript.lastUsed = new Date();
     robloxScript.usageCount += 1;
     await robloxScript.save();
 
-    // Update User mit HWID
-    const user = await User.findByIdAndUpdate(
-      robloxScript.user,
-      { hwid },
-      { new: true }
-    );
+    res.json({ success: true, message: 'HWID verifiziert' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Admin: HWID eines Scripts zurücksetzen
+router.post('/script/reset-hwid', protect, adminOnly, async (req, res) => {
+  try {
+    const { scriptKey } = req.body;
+
+    if (!scriptKey) {
+      return res.status(400).json({ message: 'scriptKey erforderlich' });
+    }
+
+    const robloxScript = await RobloxScript.findOne({ scriptKey });
+
+    if (!robloxScript) {
+      return res.status(404).json({ message: 'Script nicht gefunden' });
+    }
+
+    robloxScript.hwid = null;
+    await robloxScript.save();
+
+    res.json({ message: 'HWID zurückgesetzt' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Admin: Alle aktiven Lizenzen (RobloxScripts) abrufen
+router.get('/active-licenses', protect, adminOnly, async (req, res) => {
+  try {
+    const licenses = await RobloxScript.find({ isActive: true })
+      .sort({ createdAt: -1 });
 
     res.json({
-      success: true,
-      message: 'HWID erfasst'
+      licenses: licenses.map(s => ({
+        _id: s._id,
+        scriptKey: s.scriptKey,
+        discordId: s.discordId,
+        discordTag: s.discordTag,
+        hwid: s.hwid ? s.hwid.substring(0, 12) + '...' : null,
+        hwidFull: s.hwid,
+        isActive: s.isActive,
+        expiresAt: s.expiresAt,
+        usageCount: s.usageCount,
+        lastUsed: s.lastUsed,
+        createdAt: s.createdAt
+      }))
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

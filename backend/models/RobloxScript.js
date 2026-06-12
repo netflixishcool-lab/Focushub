@@ -22,7 +22,7 @@ const robloxScriptSchema = new mongoose.Schema({
   discordTag: String,
   loaderUrl: {
     type: String,
-    default: 'https://api.luarmor.net/files/v4/loaders/6f16f02125f8864011d8132726c0d088.lua'
+    default: ''
   },
   scriptContent: {
     type: String,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Trash2, RefreshCw, Plus, Check, Clock } from 'lucide-react';
+import { Copy, Trash2, RefreshCw, Plus, Check, Clock, RotateCcw, Monitor } from 'lucide-react';
+import { API_URL } from '../config';
 
 const KeyManagement = () => {
   const [keys, setKeys] = useState([]);
@@ -10,54 +11,38 @@ const KeyManagement = () => {
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(null);
   const [tick, setTick] = useState(0);
+  const [resettingHwid, setResettingHwid] = useState(null);
   const token = localStorage.getItem('token');
 
   const formatTimeRemaining = (expiresAt) => {
     if (!expiresAt) return '∞ Unbegrenzt';
-    
     const now = new Date();
     const expiry = new Date(expiresAt);
     const diff = expiry - now;
-    
     if (diff <= 0) return 'Abgelaufen';
-    
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
-    // Wenn > 100 Tage, dann "never" anzeigen
-    if (days > 100) {
-      return 'Never';
-    }
-    
+    if (days > 100) return 'Never';
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
     return `${expiry.toLocaleDateString('de-DE')} (${days}d ${hours}h ${minutes}m ${seconds}s)`;
   };
 
-  // Live-Timer - aktualisiert jede Sekunde
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTick(prev => prev + 1);
-    }, 1000);
-    
+    const interval = setInterval(() => setTick(prev => prev + 1), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    fetchKeys();
-  }, []);
+  useEffect(() => { fetchKeys(); }, []);
 
   const fetchKeys = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/keys/list', {
+      const response = await fetch(`${API_URL}/keys/list`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
-      if (response.ok) {
-        setKeys(data.keys || []);
-      }
+      if (response.ok) setKeys(data.keys || []);
     } catch (error) {
       console.error('Error fetching keys:', error);
     } finally {
@@ -68,17 +53,12 @@ const KeyManagement = () => {
   const generateKeys = async (e) => {
     e.preventDefault();
     setGenerating(true);
-
     try {
-      const response = await fetch('http://localhost:5000/api/keys/generate', {
+      const response = await fetch(`${API_URL}/keys/generate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ count, duration, notes })
       });
-
       if (response.ok) {
         setCount(10);
         setNotes('');
@@ -99,32 +79,47 @@ const KeyManagement = () => {
 
   const deleteKey = async (keyId) => {
     if (!window.confirm('Möchtest du diesen Key wirklich löschen?')) return;
-
     try {
-      const response = await fetch(`http://localhost:5000/api/keys/${keyId}`, {
+      const response = await fetch(`${API_URL}/keys/${keyId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (response.ok) {
-        await fetchKeys();
-      }
+      if (response.ok) await fetchKeys();
     } catch (error) {
       console.error('Error deleting key:', error);
     }
   };
 
-
+  const resetHwid = async (scriptKey) => {
+    if (!window.confirm('HWID für diesen Key zurücksetzen? Der User kann danach auf einem anderen Gerät spielen.')) return;
+    setResettingHwid(scriptKey);
+    try {
+      const response = await fetch(`${API_URL}/keys/script/reset-hwid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ scriptKey })
+      });
+      if (response.ok) {
+        await fetchKeys();
+      } else {
+        const d = await response.json();
+        alert(d.message || 'Fehler beim HWID-Reset');
+      }
+    } catch (error) {
+      console.error('Error resetting HWID:', error);
+    } finally {
+      setResettingHwid(null);
+    }
+  };
 
   return (
     <div className="p-8 min-h-screen">
-      {/* Header */}
       <div className="mb-8 fade-in">
         <h1 className="text-4xl font-bold text-white mb-2">License Keys</h1>
         <p className="text-slate-400">Generiere und verwalte Lizenzschlüssel</p>
       </div>
 
-      {/* Generation Form Card */}
+      {/* Generation Form */}
       <div className="card mb-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
@@ -135,75 +130,45 @@ const KeyManagement = () => {
             <p className="text-xs text-slate-400">Erstelle neue Lizenzschlüssel</p>
           </div>
         </div>
-
         <form onSubmit={generateKeys} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-semibold text-slate-200 mb-3">Anzahl</label>
-              <input
-                type="number"
-                min="1"
-                max="1000"
-                value={count}
+              <input type="number" min="1" max="1000" value={count}
                 onChange={(e) => setCount(parseInt(e.target.value))}
-                className="w-full px-4 py-2 rounded"
-              />
+                className="w-full px-4 py-2 rounded" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-200 mb-3">Dauer (Tage)</label>
-              <input
-                type="number"
-                min="1"
-                max="365"
-                value={duration}
+              <input type="number" min="1" max="365" value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value))}
-                className="w-full px-4 py-2 rounded"
-              />
+                className="w-full px-4 py-2 rounded" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-200 mb-3">Notizen</label>
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional..."
-                className="w-full px-4 py-2 rounded"
-              />
+              <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional..." className="w-full px-4 py-2 rounded" />
             </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={generating}
-            className="btn-primary w-full flex items-center justify-center gap-2"
-          >
+          <button type="submit" disabled={generating}
+            className="btn-primary w-full flex items-center justify-center gap-2">
             {generating ? (
-              <>
-                <div className="loading-spinner"></div>
-                Wird generiert...
-              </>
+              <><div className="loading-spinner"></div>Wird generiert...</>
             ) : (
-              <>
-                <Plus size={18} />
-                {count} Key(s) generieren
-              </>
+              <><Plus size={18} />{count} Key(s) generieren</>
             )}
           </button>
         </form>
       </div>
 
-      {/* Keys List Card */}
+      {/* Keys List */}
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-xl font-bold text-white">Alle Keys</h3>
             <p className="text-xs text-slate-400 mt-1">Insgesamt {keys.length} Keys</p>
           </div>
-          <button 
-            onClick={fetchKeys} 
-            disabled={loading}
-            className="btn-icon hover:scale-110 transition"
-          >
+          <button onClick={fetchKeys} disabled={loading} className="btn-icon hover:scale-110 transition">
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
@@ -217,8 +182,8 @@ const KeyManagement = () => {
           </div>
         ) : keys.length === 0 ? (
           <div className="text-center py-12 bg-slate-900/50 rounded-lg border border-slate-700/50">
-            <p className="text-slate-400 text-lg">No keys found</p>
-            <p className="text-slate-500 text-sm mt-2">Generate new license keys above</p>
+            <p className="text-slate-400 text-lg">Keine Keys gefunden</p>
+            <p className="text-slate-500 text-sm mt-2">Generiere oben neue Lizenzschlüssel</p>
           </div>
         ) : (
           <div className="table-container">
@@ -228,8 +193,8 @@ const KeyManagement = () => {
                   <th>Schlüssel</th>
                   <th>Status</th>
                   <th>Discord ID</th>
+                  <th>HWID</th>
                   <th>Gültig bis</th>
-                  <th>Dauer (Tage)</th>
                   <th>Aktionen</th>
                 </tr>
               </thead>
@@ -244,15 +209,9 @@ const KeyManagement = () => {
                     <td>
                       <div className="flex items-center gap-2">
                         {key.isRedeemed ? (
-                          <>
-                            <Check size={16} className="text-green-400" />
-                            <span className="badge badge-success">Eingelöst</span>
-                          </>
+                          <><Check size={16} className="text-green-400" /><span className="badge badge-success">Eingelöst</span></>
                         ) : (
-                          <>
-                            <Clock size={16} className="text-yellow-400" />
-                            <span className="badge badge-warning">Verfügbar</span>
-                          </>
+                          <><Clock size={16} className="text-yellow-400" /><span className="badge badge-warning">Verfügbar</span></>
                         )}
                       </div>
                     </td>
@@ -263,30 +222,40 @@ const KeyManagement = () => {
                         <span className="text-slate-500">-</span>
                       )}
                     </td>
+                    <td className="text-sm px-3">
+                      {key.isRedeemed && key.discordId ? (
+                        <div className="flex items-center gap-2">
+                          <Monitor size={14} className="text-slate-500" />
+                          <span className="text-slate-400 font-mono text-xs">
+                            Aktiv
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
                     <td className="text-sm text-slate-400 px-3">
                       {formatTimeRemaining(key.expiresAt)}
                     </td>
-                    <td className="text-sm text-slate-400 px-3">
-                      {key.duration || '-'}
-                    </td>
                     <td>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => copyKey(key.key)}
-                          className={`btn-icon transition ${
-                            copied === key.key 
-                              ? 'bg-green-600 text-white scale-110' 
-                              : 'hover:scale-110'
-                          }`}
-                          title="In Zwischenablage kopieren"
-                        >
+                        <button onClick={() => copyKey(key.key)}
+                          className={`btn-icon transition ${copied === key.key ? 'bg-green-600 text-white scale-110' : 'hover:scale-110'}`}
+                          title="Kopieren">
                           {copied === key.key ? <Check size={16} /> : <Copy size={16} />}
                         </button>
-                        <button
-                          onClick={() => deleteKey(key._id)}
+                        {key.isRedeemed && (
+                          <button
+                            onClick={() => resetHwid(key.key)}
+                            disabled={resettingHwid === key.key}
+                            className="btn-icon text-orange-400 hover:text-orange-300 hover:scale-110 transition"
+                            title="HWID zurücksetzen">
+                            <RotateCcw size={16} className={resettingHwid === key.key ? 'animate-spin' : ''} />
+                          </button>
+                        )}
+                        <button onClick={() => deleteKey(key._id)}
                           className="btn-icon text-red-400 hover:text-red-300 hover:scale-110 transition"
-                          title="Key löschen"
-                        >
+                          title="Key löschen">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -303,34 +272,22 @@ const KeyManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Total Keys</p>
-              <p className="text-3xl font-bold text-white mt-2">{keys.length}</p>
-            </div>
+            <div><p className="text-slate-400 text-sm">Total Keys</p>
+              <p className="text-3xl font-bold text-white mt-2">{keys.length}</p></div>
             <div className="text-4xl">🔐</div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Available</p>
-              <p className="text-3xl font-bold text-yellow-400 mt-2">
-                {keys.filter(k => !k.isRedeemed).length}
-              </p>
-            </div>
+            <div><p className="text-slate-400 text-sm">Verfügbar</p>
+              <p className="text-3xl font-bold text-yellow-400 mt-2">{keys.filter(k => !k.isRedeemed).length}</p></div>
             <div className="text-4xl">⏳</div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Redeemed</p>
-              <p className="text-3xl font-bold text-green-400 mt-2">
-                {keys.filter(k => k.isRedeemed).length}
-              </p>
-            </div>
+            <div><p className="text-slate-400 text-sm">Eingelöst</p>
+              <p className="text-3xl font-bold text-green-400 mt-2">{keys.filter(k => k.isRedeemed).length}</p></div>
             <div className="text-4xl">✓</div>
           </div>
         </div>

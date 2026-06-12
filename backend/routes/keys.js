@@ -127,6 +127,10 @@ router.get('/list', protect, adminOnly, async (req, res) => {
           if (script) {
             keyObj.discordId = script.discordId;
             keyObj.discordTag = script.discordTag;
+            keyObj.hwid = script.hwid ? script.hwid.substring(0, 16) + '...' : null;
+            keyObj.hwidSet = !!script.hwid;
+            keyObj.usageCount = script.usageCount;
+            keyObj.lastUsed = script.lastUsed;
           }
         }
         return keyObj;

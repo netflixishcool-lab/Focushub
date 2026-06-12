@@ -218,12 +218,20 @@ const KeyManagement = () => {
                       )}
                     </td>
                     <td className="text-sm px-3">
-                      {key.isRedeemed && key.discordId ? (
+                      {key.isRedeemed && key.hwidSet ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Monitor size={13} className="text-green-400" />
+                            <span className="badge badge-success text-xs">Gesperrt</span>
+                          </div>
+                          <code className="text-xs text-slate-400 font-mono bg-slate-900/50 px-2 py-1 rounded">
+                            {key.hwid || '...'}
+                          </code>
+                        </div>
+                      ) : key.isRedeemed ? (
                         <div className="flex items-center gap-2">
-                          <Monitor size={14} className="text-slate-500" />
-                          <span className="text-slate-400 font-mono text-xs">
-                            Aktiv
-                          </span>
+                          <Monitor size={13} className="text-yellow-400" />
+                          <span className="text-xs text-yellow-400">Noch nicht ausgeführt</span>
                         </div>
                       ) : (
                         <span className="text-slate-600">-</span>

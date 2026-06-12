@@ -167,18 +167,13 @@ router.put('/projects/:projectId', protect, adminOnly, async (req, res) => {
   }
 });
 
-// DELETE: Projekt löschen (Admin)
+// DELETE: Projekt löschen (Admin - jeder Admin kann löschen)
 router.delete('/projects/:projectId', protect, adminOnly, async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId);
 
     if (!project) {
       return res.status(404).json({ message: 'Projekt nicht gefunden' });
-    }
-
-    // Nur Owner kann löschen
-    if (project.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Nur der Ersteller kann dieses Projekt löschen' });
     }
 
     await Project.deleteOne({ _id: req.params.projectId });

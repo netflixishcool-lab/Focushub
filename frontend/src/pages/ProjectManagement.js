@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 export default function ProjectManagement() {
   const [projects, setProjects] = useState([]);
@@ -13,8 +14,6 @@ export default function ProjectManagement() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-
-  const API_URL = 'http://localhost:5000/api';
 
   // Lade Projekte beim Laden der Component
   useEffect(() => {
@@ -103,7 +102,7 @@ export default function ProjectManagement() {
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">🎮 Projekt Verwaltung</h1>
+          <h1 className="text-4xl font-bold">Projekt Verwaltung</h1>
           <button
             onClick={() => setShowUploadForm(!showUploadForm)}
             className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-bold transition"

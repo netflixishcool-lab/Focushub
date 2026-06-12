@@ -143,6 +143,27 @@ router.get('/list', protect, adminOnly, async (req, res) => {
   }
 });
 
+// Lösche Lizenz direkt per scriptKey (für UserManagement)
+router.delete('/revoke/:scriptKey', protect, adminOnly, async (req, res) => {
+  try {
+    const script = await RobloxScript.findOne({ scriptKey: req.params.scriptKey });
+
+    if (!script) {
+      return res.status(404).json({ message: 'Lizenz nicht gefunden' });
+    }
+
+    // Lösche den dazugehörigen LicenseKey
+    await LicenseKey.findByIdAndDelete(script.licenseKey);
+
+    // Lösche RobloxScript
+    await RobloxScript.deleteOne({ _id: script._id });
+
+    res.json({ message: 'Lizenz widerrufen' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Lösche einen Key (Admin) - revoked auch Discord User
 router.delete('/:id', protect, adminOnly, async (req, res) => {
   try {

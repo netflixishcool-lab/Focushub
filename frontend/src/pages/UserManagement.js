@@ -64,20 +64,17 @@ const UserManagement = () => {
   };
 
   const revokeKey = async (scriptKey, discordTag) => {
-    if (!window.confirm(`Lizenz von ${discordTag || scriptKey} widerrufen? Dies kann nicht rückgängig gemacht werden.`)) return;
+    if (!window.confirm(`Lizenz von ${discordTag || scriptKey} widerrufen?\nDies löscht auch den Key aus dem License Keys Panel.`)) return;
     try {
-      // Find the license key by scriptKey and delete it
-      const listRes = await fetch(`${API_URL}/keys/list`, {
+      const response = await fetch(`${API_URL}/keys/revoke/${scriptKey}`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      const listData = await listRes.json();
-      const keyRecord = listData.keys?.find(k => k.key === scriptKey);
-      if (keyRecord) {
-        await fetch(`${API_URL}/keys/${keyRecord._id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
+      if (response.ok) {
         await fetchLicenses();
+      } else {
+        const d = await response.json();
+        alert(d.message || 'Fehler beim Löschen');
       }
     } catch (error) {
       console.error('Error revoking key:', error);
@@ -202,7 +199,6 @@ const UserManagement = () => {
                         <div className="flex items-center gap-2">
                           <Monitor size={14} className="text-green-400" />
                           <code className="text-xs text-green-400 font-mono">{license.hwid}</code>
-                          <span className="badge badge-success text-xs">Gesperrt</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">

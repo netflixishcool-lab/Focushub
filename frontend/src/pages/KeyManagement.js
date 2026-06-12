@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Trash2, RefreshCw, Plus, Check, Clock, RotateCcw, Monitor } from 'lucide-react';
+import { Copy, Trash2, RefreshCw, Plus, Check, Clock, RotateCcw, Monitor, Activity } from 'lucide-react';
 import { API_URL } from '../config';
 
 const KeyManagement = () => {
@@ -86,7 +86,7 @@ const KeyManagement = () => {
   };
 
   const resetHwid = async (scriptKey) => {
-    if (!window.confirm('HWID für diesen Key zurücksetzen? Der User kann danach auf einem anderen Gerät spielen.')) return;
+    if (!window.confirm('HWID zurücksetzen? Der User kann danach auf einem anderen Gerät spielen.')) return;
     setResettingHwid(scriptKey);
     try {
       const response = await fetch(`${API_URL}/keys/script/reset-hwid`, {
@@ -156,7 +156,7 @@ const KeyManagement = () => {
         </form>
       </div>
 
-      {/* Keys List */}
+      {/* Keys Table */}
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -185,10 +185,12 @@ const KeyManagement = () => {
             <table>
               <thead>
                 <tr>
+                  <th>Discord</th>
                   <th>Schlüssel</th>
                   <th>Status</th>
-                  <th>Discord ID</th>
                   <th>HWID</th>
+                  <th>Nutzungen</th>
+                  <th>Zuletzt aktiv</th>
                   <th>Gültig bis</th>
                   <th>Aktionen</th>
                 </tr>
@@ -196,63 +198,101 @@ const KeyManagement = () => {
               <tbody>
                 {keys.map((key) => (
                   <tr key={key._id}>
+                    {/* Discord */}
                     <td>
-                      <code className="text-sm bg-slate-900/50 px-3 py-2 rounded font-mono text-blue-300">
+                      {key.isRedeemed ? (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-bold">
+                              {(key.discordTag || '?').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white text-sm">{key.discordTag || 'Unbekannt'}</p>
+                            <code className="text-xs text-slate-500">{key.discordId || '-'}</code>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-slate-500 text-xs">-</span>
+                          </div>
+                          <span className="text-slate-500 text-sm">Nicht eingelöst</span>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Schlüssel */}
+                    <td>
+                      <code className="text-xs bg-slate-900/50 px-2 py-1 rounded font-mono text-blue-300">
                         {key.key.substring(0, 12)}...
                       </code>
                     </td>
+
+                    {/* Status */}
                     <td>
                       <div className="flex items-center gap-2">
                         {key.isRedeemed ? (
-                          <><Check size={16} className="text-green-400" /><span className="badge badge-success">Eingelöst</span></>
+                          <><Check size={14} className="text-green-400" /><span className="badge badge-success">Eingelöst</span></>
                         ) : (
-                          <><Clock size={16} className="text-yellow-400" /><span className="badge badge-warning">Verfügbar</span></>
+                          <><Clock size={14} className="text-yellow-400" /><span className="badge badge-warning">Verfügbar</span></>
                         )}
                       </div>
                     </td>
-                    <td className="text-sm text-slate-400 px-3">
-                      {key.isRedeemed ? (
-                        <div className="flex flex-col gap-1">
-                          {key.discordTag && <span className="text-white text-xs font-semibold">{key.discordTag}</span>}
-                          <code className="bg-slate-900/50 px-2 py-1 rounded text-blue-300">{key.discordId || '-'}</code>
-                        </div>
-                      ) : (
-                        <span className="text-slate-500">-</span>
-                      )}
-                    </td>
-                    <td className="text-sm px-3">
+
+                    {/* HWID */}
+                    <td>
                       {key.isRedeemed && key.hwidSet ? (
-                        <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <Monitor size={14} className="text-green-400 flex-shrink-0" />
                           <div className="flex items-center gap-1">
-                            <code className="text-xs text-slate-300 font-mono bg-slate-900/50 px-2 py-1 rounded break-all">
-                              {key.hwid}
-                            </code>
+                            <code className="text-xs text-green-400 font-mono break-all">{key.hwid}</code>
                             <button
-                              onClick={() => { navigator.clipboard.writeText(key.hwid); }}
-                              className="btn-icon flex-shrink-0"
-                              title="Kopieren"
-                            >
-                              <Copy size={12} />
+                              onClick={() => navigator.clipboard.writeText(key.hwid)}
+                              className="btn-icon flex-shrink-0" title="Kopieren">
+                              <Copy size={11} />
                             </button>
                           </div>
                         </div>
                       ) : key.isRedeemed ? (
                         <div className="flex items-center gap-2">
-                          <Monitor size={13} className="text-yellow-400" />
+                          <Monitor size={14} className="text-yellow-400" />
                           <span className="text-xs text-yellow-400">Noch nicht ausgeführt</span>
                         </div>
                       ) : (
-                        <span className="text-slate-600">-</span>
+                        <span className="text-slate-600 text-xs">-</span>
                       )}
                     </td>
-                    <td className="text-sm text-slate-400 px-3">
-                      {formatTimeRemaining(key.expiresAt)}
+
+                    {/* Nutzungen */}
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <Activity size={14} className="text-slate-500" />
+                        <span className="text-sm text-slate-300">{key.usageCount || 0}x</span>
+                      </div>
                     </td>
+
+                    {/* Zuletzt aktiv */}
+                    <td className="text-sm text-slate-400">
+                      {key.lastUsed
+                        ? new Date(key.lastUsed).toLocaleDateString('de-DE')
+                        : 'Nie'}
+                    </td>
+
+                    {/* Gültig bis */}
+                    <td className="text-sm text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-slate-500" />
+                        {formatTimeRemaining(key.expiresAt)}
+                      </div>
+                    </td>
+
+                    {/* Aktionen */}
                     <td>
                       <div className="flex items-center gap-2">
                         <button onClick={() => copyKey(key.key)}
                           className={`btn-icon transition ${copied === key.key ? 'bg-green-600 text-white scale-110' : 'hover:scale-110'}`}
-                          title="Kopieren">
+                          title="Key kopieren">
                           {copied === key.key ? <Check size={16} /> : <Copy size={16} />}
                         </button>
                         {key.isRedeemed && (

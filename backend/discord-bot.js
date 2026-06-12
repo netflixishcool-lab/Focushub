@@ -60,7 +60,8 @@ client.on('interactionCreate', async (interaction) => {
         const response = await axios.post(`${API_URL}/keys/redeem`, {
           key: key,
           discordId: interaction.user.id,
-          discordTag: interaction.user.tag
+          discordTag: interaction.user.tag,
+          discordAvatar: interaction.user.displayAvatarURL({ size: 128, extension: 'png' })
         });
         
         // Script-Loader-Code (kleiner, sauberer Code)
@@ -183,7 +184,8 @@ client.on('messageCreate', async (message) => {
         const response = await axios.post(`${API_URL}/keys/redeem`, {
           key: key,
           discordId: message.author.id,
-          discordTag: message.author.tag
+          discordTag: message.author.tag,
+          discordAvatar: message.author.displayAvatarURL({ size: 128, extension: 'png' })
         });
         
         const successEmbed = new EmbedBuilder()

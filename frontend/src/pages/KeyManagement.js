@@ -202,11 +202,16 @@ const KeyManagement = () => {
                     <td>
                       {key.isRedeemed ? (
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white text-xs font-bold">
-                              {(key.discordTag || '?').charAt(0).toUpperCase()}
-                            </span>
-                          </div>
+                          {key.discordAvatar ? (
+                            <img src={key.discordAvatar} alt="avatar"
+                              className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs font-bold">
+                                {(key.discordTag || '?').charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-white text-sm">{key.discordTag || 'Unbekannt'}</p>
                             <code className="text-xs text-slate-500">{key.discordId || '-'}</code>
@@ -222,10 +227,10 @@ const KeyManagement = () => {
                       )}
                     </td>
 
-                    {/* Schlüssel */}
+                    {/* Schlüssel (voll) */}
                     <td>
-                      <code className="text-xs bg-slate-900/50 px-2 py-1 rounded font-mono text-blue-300">
-                        {key.key.substring(0, 12)}...
+                      <code className="text-xs bg-slate-900/50 px-2 py-1 rounded font-mono text-blue-300 break-all">
+                        {key.key}
                       </code>
                     </td>
 

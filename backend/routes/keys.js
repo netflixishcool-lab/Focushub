@@ -38,7 +38,7 @@ router.post('/generate', protect, adminOnly, async (req, res) => {
 
 router.post('/redeem', async (req, res) => {
   try {
-    const { key, discordId, discordTag } = req.body;
+    const { key, discordId, discordTag, discordAvatar } = req.body;
 
     if (!key || !discordId) {
       return res.status(400).json({ message: 'Key und Discord ID erforderlich' });
@@ -95,6 +95,7 @@ print("Script erfolgreich ausgeführt!")`;
       hwid: null,
       discordId,
       discordTag,
+      discordAvatar: discordAvatar || null,
       scriptContent,
       expiresAt: licenseKey.expiresAt
     });
@@ -128,6 +129,7 @@ router.get('/list', protect, adminOnly, async (req, res) => {
           if (script) {
             keyObj.discordId = script.discordId;
             keyObj.discordTag = script.discordTag;
+            keyObj.discordAvatar = script.discordAvatar || null;
             keyObj.hwid = script.hwid || null;
             keyObj.hwidSet = !!script.hwid;
             keyObj.usageCount = script.usageCount;
@@ -274,7 +276,8 @@ router.get('/active-licenses', protect, adminOnly, async (req, res) => {
         scriptKey: s.scriptKey,
         discordId: s.discordId,
         discordTag: s.discordTag,
-        hwid: s.hwid ? s.hwid.substring(0, 12) + '...' : null,
+        discordAvatar: s.discordAvatar || null,
+        hwid: s.hwid,
         hwidFull: s.hwid,
         isActive: s.isActive,
         expiresAt: s.expiresAt,

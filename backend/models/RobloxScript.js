@@ -20,6 +20,7 @@ const robloxScriptSchema = new mongoose.Schema({
   hwid: String,
   discordId: String,
   discordTag: String,
+  discordAvatar: String,
   loaderUrl: {
     type: String,
     default: ''

@@ -178,11 +178,16 @@ const UserManagement = () => {
                   <tr key={license._id}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            {(license.discordTag || '?').charAt(0).toUpperCase()}
-                          </span>
-                        </div>
+                        {license.discordAvatar ? (
+                          <img src={license.discordAvatar} alt="avatar"
+                            className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-bold">
+                              {(license.discordTag || '?').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                         <div>
                           <p className="font-semibold text-white text-sm">{license.discordTag || 'Unbekannt'}</p>
                           <code className="text-xs text-slate-500">{license.discordId || '-'}</code>

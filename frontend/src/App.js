@@ -12,10 +12,10 @@ import Navbar from './components/Navbar';
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(!!localStorage.getItem('token'));
 
   useEffect(() => {
     if (token) {
-      // Verify token
       const verifyToken = async () => {
         try {
           const response = await fetch(`${API_URL}/auth/me`, {
@@ -30,11 +30,25 @@ const App = () => {
           }
         } catch (error) {
           console.error('Token verification failed:', error);
+        } finally {
+          setLoading(false);
         }
       };
       verifyToken();
     }
   }, [token]);
+
+  // Zeige Ladescreen während Token geprüft wird
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="loading-spinner"></div>
+          <p className="text-slate-400 text-sm">Wird geladen...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!token) {
     return (
@@ -42,6 +56,7 @@ const App = () => {
         <Routes>
           <Route path="*" element={<Login onLogin={(newToken) => {
             setToken(newToken);
+            setLoading(true);
             localStorage.setItem('token', newToken);
           }} />} />
         </Routes>
@@ -53,7 +68,11 @@ const App = () => {
     return (
       <Router>
         <Routes>
-          <Route path="*" element={<div className="p-8 text-center text-red-600 font-bold">Zugriff verweigert!</div>} />
+          <Route path="*" element={<Login onLogin={(newToken) => {
+            setToken(newToken);
+            setLoading(true);
+            localStorage.setItem('token', newToken);
+          }} />} />
         </Routes>
       </Router>
     );
@@ -62,13 +81,11 @@ const App = () => {
   return (
     <Router>
       <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        {user?.isAdmin && (
-          <Navbar user={user} onLogout={() => {
-            setToken(null);
-            setUser(null);
-            localStorage.removeItem('token');
-          }} />
-        )}
+        <Navbar user={user} onLogout={() => {
+          setToken(null);
+          setUser(null);
+          localStorage.removeItem('token');
+        }} />
         <main className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<Dashboard />} />

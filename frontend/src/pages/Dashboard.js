@@ -61,12 +61,12 @@ const Dashboard = () => {
       description: 'Available licenses'
     },
     {
-      title: 'Premium Users',
-      value: stats?.premiumUsers || 0,
+      title: 'Redeemed Keys',
+      value: stats?.redeemedKeys || 0,
       icon: Crown,
       color: 'gradient-orange',
-      trend: '+5',
-      description: 'Active premium'
+      trend: '',
+      description: 'Eingelöste Keys'
     }
   ];
 

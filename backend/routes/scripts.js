@@ -68,12 +68,11 @@ router.post('/upload', protect, adminOnly, async (req, res) => {
   }
 });
 
-// GET: Alle Projekte (Public)
-router.get('/projects', async (req, res) => {
+// GET: Alle Projekte (Admin: alle, sonst nur public)
+router.get('/projects', protect, adminOnly, async (req, res) => {
   try {
-    const projects = await Project.find({ isPublic: true, isActive: true })
-      .select('name description version downloads lastModified createdAt')
-      .sort({ downloads: -1 });
+    const projects = await Project.find({})
+      .sort({ createdAt: -1 });
 
     res.json({ projects });
   } catch (error) {

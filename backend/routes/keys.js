@@ -2,6 +2,7 @@ import express from 'express';
 import LicenseKey from '../models/LicenseKey.js';
 import User from '../models/User.js';
 import RobloxScript from '../models/RobloxScript.js';
+import Project from '../models/Project.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -287,7 +288,7 @@ router.get('/active-licenses', protect, adminOnly, async (req, res) => {
   }
 });
 
-// Roblox Script abrufen
+// Roblox Script abrufen - liefert das aktive Projekt-Script
 router.get('/script/:scriptKey', async (req, res) => {
   try {
     const { scriptKey } = req.params;
@@ -298,19 +299,21 @@ router.get('/script/:scriptKey', async (req, res) => {
       return res.status(404).json({ message: 'Script nicht gefunden' });
     }
 
-    // Prüfe ob Script abgelaufen ist
     if (robloxScript.expiresAt && new Date() > robloxScript.expiresAt) {
       return res.status(403).json({ message: 'Script abgelaufen' });
     }
 
-    // Update last used
+    // Aktives Projekt-Script vom Admin laden
+    const activeProject = await Project.findOne({ isActive: true }).sort({ createdAt: -1 });
+    const scriptContent = activeProject ? activeProject.scriptContent : robloxScript.scriptContent;
+
     robloxScript.lastUsed = new Date();
     robloxScript.usageCount += 1;
     await robloxScript.save();
 
     res.json({
       success: true,
-      script: robloxScript.scriptContent,
+      script: scriptContent,
       expiresAt: robloxScript.expiresAt
     });
   } catch (error) {

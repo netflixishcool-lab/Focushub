@@ -1,264 +1,273 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { Plus, Trash2, RefreshCw, Code, Check, X } from 'lucide-react';
 import { API_URL } from '../config';
 
 export default function ProjectManagement() {
   const [projects, setProjects] = useState([]);
-  const [showUploadForm, setShowUploadForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    scriptContent: '',
-    category: 'Tool',
-    isPublic: true
-  });
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ name: '', description: '', scriptContent: '', category: 'Tool' });
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const token = localStorage.getItem('token');
 
-  // Lade Projekte beim Laden der Component
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  useEffect(() => { loadProjects(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadProjects = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/scripts/projects`);
-      setProjects(response.data.projects);
-    } catch (error) {
-      console.error('Fehler beim Laden der Projekte:', error);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     setLoading(true);
-    setMessage('');
-
     try {
-      const token = localStorage.getItem('token');
-      
-      await axios.post(
-        `${API_URL}/scripts/projects`,
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      setMessage('✓ Projekt erfolgreich hochgeladen!');
-      setFormData({
-        name: '',
-        description: '',
-        scriptContent: '',
-        category: 'Tool',
-        isPublic: true
+      const res = await fetch(`${API_URL}/scripts/projects`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
-      setTimeout(() => {
-        setShowUploadForm(false);
-        loadProjects();
-      }, 1500);
-    } catch (error) {
-      setMessage(`✗ Fehler: ${error.response?.data?.message || 'Fehler beim Upload'}`);
+      const data = await res.json();
+      if (res.ok) setProjects(data.projects || []);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (projectId) => {
-    if (!window.confirm('Projekt wirklich löschen?')) return;
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.scriptContent) {
+      setMessage('❌ Name und Script-Inhalt sind Pflichtfelder');
+      return;
+    }
+    setSaving(true);
+    setMessage('');
     try {
-      const token = localStorage.getItem('token');
-      
-      await axios.delete(
-        `${API_URL}/scripts/projects/${projectId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-
-      setMessage('✓ Projekt gelöscht!');
-      loadProjects();
-    } catch (error) {
-      setMessage(`✗ Fehler: ${error.response?.data?.message || 'Fehler beim Löschen'}`);
+      const res = await fetch(`${API_URL}/scripts/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage('✓ Script hochgeladen! Alle Key-Inhaber erhalten jetzt dieses Script.');
+        setFormData({ name: '', description: '', scriptContent: '', category: 'Tool' });
+        setShowForm(false);
+        loadProjects();
+      } else {
+        setMessage(`❌ ${data.message}`);
+      }
+    } catch (err) {
+      setMessage('❌ Verbindungsfehler');
+    } finally {
+      setSaving(false);
     }
   };
 
+  const deleteProject = async (id, name) => {
+    if (!window.confirm(`"${name}" wirklich löschen?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/scripts/projects/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setMessage('✓ Projekt gelöscht');
+        loadProjects();
+      } else {
+        const d = await res.json();
+        setMessage(`❌ ${d.message}`);
+      }
+    } catch (err) {
+      setMessage('❌ Verbindungsfehler');
+    }
+  };
+
+  const activeProject = projects.find(p => p.isActive);
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Projekt Verwaltung</h1>
-          <button
-            onClick={() => setShowUploadForm(!showUploadForm)}
-            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-bold transition"
-          >
-            {showUploadForm ? '✕ Abbrechen' : '+ Neues Projekt'}
-          </button>
+    <div className="p-8 min-h-screen">
+      <div className="mb-8 fade-in">
+        <h1 className="text-4xl font-bold text-white mb-2">Projekt Verwaltung</h1>
+        <p className="text-slate-400">Lade dein Lua-Script hoch — alle Key-Inhaber führen es beim Start aus</p>
+      </div>
+
+      {/* Active Script Banner */}
+      {activeProject && (
+        <div className="mb-6 p-4 bg-green-900/30 border border-green-700/50 rounded-lg flex items-center gap-3">
+          <Check size={18} className="text-green-400 flex-shrink-0" />
+          <div>
+            <p className="text-green-300 font-semibold">Aktives Script: <span className="text-white">{activeProject.name}</span></p>
+            <p className="text-green-500 text-xs mt-1">Dieses Script wird an alle verifizierten Key-Inhaber ausgeliefert</p>
+          </div>
         </div>
-
-        {message && (
-          <div className={`p-4 rounded mb-6 ${message.includes('✓') ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}`}>
-            {message}
+      )}
+      {!activeProject && !loading && (
+        <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg flex items-center gap-3">
+          <X size={18} className="text-yellow-400 flex-shrink-0" />
+          <div>
+            <p className="text-yellow-300 font-semibold">Kein aktives Script</p>
+            <p className="text-yellow-500 text-xs mt-1">Lade ein Script hoch damit Key-Inhaber es ausführen können</p>
           </div>
-        )}
+        </div>
+      )}
 
-        {showUploadForm && (
-          <div className="bg-gray-800 p-8 rounded-lg mb-8 border border-gray-700">
-            <h2 className="text-2xl font-bold mb-6">Neues Script Projekt</h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold mb-2">Projekt Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="z.B. Aimbot Tool"
-                    required
-                    className="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold mb-2">Kategorie</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white focus:border-blue-500 outline-none"
-                  >
-                    <option>Game</option>
-                    <option>Tool</option>
-                    <option>Utility</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold mb-2">Beschreibung</label>
-                <input
-                  type="text"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Was macht dieses Projekt?"
-                  className="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white focus:border-blue-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold mb-2">Lua Script Code *</label>
-                <textarea
-                  name="scriptContent"
-                  value={formData.scriptContent}
-                  onChange={handleInputChange}
-                  placeholder="Dein Lua-Script hier eingeben..."
-                  required
-                  rows="10"
-                  className="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white font-mono focus:border-blue-500 outline-none"
-                />
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isPublic"
-                  checked={formData.isPublic}
-                  onChange={handleInputChange}
-                  id="isPublic"
-                  className="mr-2"
-                />
-                <label htmlFor="isPublic" className="text-sm font-bold cursor-pointer">
-                  Öffentlich (für alle Benutzer sichtbar)
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition disabled:opacity-50"
-              >
-                {loading ? '⏳ Wird hochgeladen...' : '✓ Projekt Speichern'}
-              </button>
-            </form>
+      {/* Controls */}
+      <div className="card mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white">Scripts verwalten</h3>
+            <p className="text-xs text-slate-400 mt-1">Das neueste aktive Script wird ausgeliefert</p>
           </div>
-        )}
+          <div className="flex gap-3">
+            <button onClick={loadProjects} disabled={loading} className="btn-icon hover:scale-110 transition">
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            </button>
+            <button onClick={() => setShowForm(!showForm)}
+              className="btn-primary flex items-center gap-2">
+              <Plus size={18} />
+              Neues Script
+            </button>
+          </div>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.length > 0 ? (
-            projects.map(project => (
-              <div key={project._id} className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-blue-500 transition">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold">{project.name}</h3>
-                    <span className="text-xs bg-blue-600 px-2 py-1 rounded mt-2 inline-block">
-                      {project.category}
-                    </span>
-                  </div>
-                  <span className="text-2xl">
-                    {project.isPublic ? '🌐' : '🔒'}
-                  </span>
-                </div>
+      {/* Message */}
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg border ${message.startsWith('✓')
+          ? 'bg-green-900/30 border-green-700/50 text-green-300'
+          : 'bg-red-900/30 border-red-700/50 text-red-300'}`}>
+          {message}
+        </div>
+      )}
 
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">{project.description}</p>
-
-                <div className="grid grid-cols-2 gap-2 text-xs mb-4">
-                  <div className="bg-gray-700 p-2 rounded">
-                    <div className="text-gray-400">Version</div>
-                    <div className="font-bold">{project.version}</div>
-                  </div>
-                  <div className="bg-gray-700 p-2 rounded">
-                    <div className="text-gray-400">Downloads</div>
-                    <div className="font-bold">{project.downloads}</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleDelete(project._id)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm font-bold transition"
-                  >
-                    �️ Löschen
-                  </button>
-                  <button
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      link.href = `data:text/plain;charset=utf-8,${encodeURIComponent(project.scriptContent)}`;
-                      link.download = `${project.name}.lua`;
-                      link.click();
-                    }}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded text-sm font-bold transition"
-                  >
-                    ⬇️ Download
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12 text-gray-400">
-              <p className="text-lg">Noch keine Projekte hochgeladen</p>
-              <p className="text-sm">Klick auf "+ Neues Projekt" um zu starten</p>
+      {/* Upload Form */}
+      {showForm && (
+        <div className="card mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+              <Code size={20} className="text-white" />
             </div>
-          )}
+            <div>
+              <h3 className="text-xl font-bold text-white">Neues Script hochladen</h3>
+              <p className="text-xs text-slate-400">Lua-Code eingeben — wird sofort aktiv nach dem Speichern</p>
+            </div>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-200 mb-2">Script Name *</label>
+                <input type="text" value={formData.name}
+                  onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  placeholder="z.B. FocusHub v1.0" className="w-full px-4 py-2 rounded" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-200 mb-2">Kategorie</label>
+                <select value={formData.category}
+                  onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
+                  className="w-full px-4 py-2 rounded bg-slate-800 text-white border border-slate-600">
+                  <option>Tool</option>
+                  <option>Game</option>
+                  <option>Utility</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-200 mb-2">Beschreibung</label>
+              <input type="text" value={formData.description}
+                onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+                placeholder="Optional..." className="w-full px-4 py-2 rounded" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-200 mb-2">Lua Script Code *</label>
+              <textarea value={formData.scriptContent}
+                onChange={e => setFormData(p => ({ ...p, scriptContent: e.target.value }))}
+                placeholder="-- Dein Lua Script hier einfügen..."
+                rows={14}
+                className="w-full px-4 py-3 rounded font-mono text-sm bg-slate-900 text-green-300 border border-slate-600 focus:border-blue-500 outline-none resize-y"
+                required />
+              <p className="text-xs text-slate-500 mt-1">{formData.scriptContent.length} Zeichen</p>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" disabled={saving}
+                className="btn-primary flex items-center gap-2 flex-1 justify-center">
+                {saving ? <><div className="loading-spinner"></div>Wird gespeichert...</> : <><Check size={18} />Script speichern & aktivieren</>}
+              </button>
+              <button type="button" onClick={() => setShowForm(false)}
+                className="btn-icon px-4">
+                <X size={18} />
+              </button>
+            </div>
+          </form>
         </div>
+      )}
+
+      {/* Projects List */}
+      <div className="card">
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-white">Alle Scripts ({projects.length})</h3>
+          <p className="text-xs text-slate-400 mt-1">Das neueste Script wird automatisch an Key-Inhaber ausgeliefert</p>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <div className="loading-spinner"></div>
+              <p className="text-slate-400">Wird geladen...</p>
+            </div>
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="text-center py-12 bg-slate-900/50 rounded-lg border border-slate-700/50">
+            <p className="text-slate-400 text-lg">Noch keine Scripts hochgeladen</p>
+            <p className="text-slate-500 text-sm mt-2">Klick auf "Neues Script" um dein Lua-Script zu hinterlegen</p>
+          </div>
+        ) : (
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kategorie</th>
+                  <th>Status</th>
+                  <th>Größe</th>
+                  <th>Erstellt</th>
+                  <th>Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((p) => (
+                  <tr key={p._id}>
+                    <td>
+                      <div>
+                        <p className="font-semibold text-white">{p.name}</p>
+                        {p.description && <p className="text-xs text-slate-500 mt-1">{p.description}</p>}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="badge badge-info">{p.category}</span>
+                    </td>
+                    <td>
+                      {p.isActive ? (
+                        <span className="badge badge-success">Aktiv</span>
+                      ) : (
+                        <span className="badge badge-warning">Inaktiv</span>
+                      )}
+                    </td>
+                    <td className="text-sm text-slate-400">
+                      {p.scriptContent ? `${(p.scriptContent.length / 1024).toFixed(1)} KB` : '-'}
+                    </td>
+                    <td className="text-sm text-slate-400">
+                      {new Date(p.createdAt).toLocaleDateString('de-DE')}
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => deleteProject(p._id, p.name)}
+                        className="btn-icon text-red-400 hover:text-red-300 hover:scale-110 transition"
+                        title="Löschen">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

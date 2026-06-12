@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Key, Users, LogOut, Gamepad2 } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Key, Users, LogOut, FolderOpen } from 'lucide-react';
 
 const Navbar = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,7 +11,7 @@ const Navbar = ({ user, onLogout }) => {
   const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/keys', icon: Key, label: 'License Keys' },
-    { path: '/projects', icon: Gamepad2, label: 'Projects' },
+    { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: '/users', icon: Users, label: 'Users' }
   ];
 

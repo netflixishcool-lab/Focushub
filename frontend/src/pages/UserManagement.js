@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, RefreshCw, Search, Clock, Monitor, RotateCcw, Activity } from 'lucide-react';
+import { Trash2, RefreshCw, Search, Clock, Monitor, RotateCcw, Activity, Users } from 'lucide-react';
 import { API_URL } from '../config';
 
 const UserManagement = () => {
@@ -121,21 +121,27 @@ const UserManagement = () => {
           <div className="flex items-center justify-between">
             <div><p className="text-slate-400 text-sm">Aktive Lizenzen</p>
               <p className="text-3xl font-bold text-white mt-2">{licenses.length}</p></div>
-            <div className="text-4xl">👥</div>
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <Users size={24} className="text-blue-400" />
+            </div>
           </div>
         </div>
         <div className="card">
           <div className="flex items-center justify-between">
             <div><p className="text-slate-400 text-sm">HWID Gesperrt</p>
               <p className="text-3xl font-bold text-green-400 mt-2">{withHwid}</p></div>
-            <div className="text-4xl">🔒</div>
+            <div className="p-3 bg-green-500/20 rounded-xl">
+              <Monitor size={24} className="text-green-400" />
+            </div>
           </div>
         </div>
         <div className="card">
           <div className="flex items-center justify-between">
             <div><p className="text-slate-400 text-sm">Kein HWID</p>
               <p className="text-3xl font-bold text-yellow-400 mt-2">{licenses.length - withHwid}</p></div>
-            <div className="text-4xl">⚠️</div>
+            <div className="p-3 bg-yellow-500/20 rounded-xl">
+              <RefreshCw size={24} className="text-yellow-400" />
+            </div>
           </div>
         </div>
       </div>

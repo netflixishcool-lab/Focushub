@@ -6,6 +6,25 @@ import Project from '../models/Project.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 
+// Holt Discord Avatar für eine User-ID und speichert ihn in der DB
+async function fetchAndSaveAvatar(script) {
+  if (!script.discordId || script.discordAvatar) return script.discordAvatar;
+  try {
+    const res = await fetch(`https://discord.com/api/v10/users/${script.discordId}`, {
+      headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
+    });
+    if (!res.ok) return null;
+    const user = await res.json();
+    const avatarUrl = user.avatar
+      ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`
+      : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(user.id) % 6n)}.png`;
+    await RobloxScript.findByIdAndUpdate(script._id, { discordAvatar: avatarUrl });
+    return avatarUrl;
+  } catch {
+    return null;
+  }
+}
+
 const router = express.Router();
 
 router.post('/generate', protect, adminOnly, async (req, res) => {
@@ -129,7 +148,7 @@ router.get('/list', protect, adminOnly, async (req, res) => {
           if (script) {
             keyObj.discordId = script.discordId;
             keyObj.discordTag = script.discordTag;
-            keyObj.discordAvatar = script.discordAvatar || null;
+            keyObj.discordAvatar = script.discordAvatar || await fetchAndSaveAvatar(script);
             keyObj.hwid = script.hwid || null;
             keyObj.hwidSet = !!script.hwid;
             keyObj.usageCount = script.usageCount;
@@ -270,13 +289,19 @@ router.get('/active-licenses', protect, adminOnly, async (req, res) => {
     const licenses = await RobloxScript.find({ isActive: true })
       .sort({ createdAt: -1 });
 
+    // Fehlende Avatare nachladen (fire & forget)
+    const avatarMap = {};
+    await Promise.all(licenses.map(async s => {
+      avatarMap[s._id] = s.discordAvatar || await fetchAndSaveAvatar(s);
+    }));
+
     res.json({
       licenses: licenses.map(s => ({
         _id: s._id,
         scriptKey: s.scriptKey,
         discordId: s.discordId,
         discordTag: s.discordTag,
-        discordAvatar: s.discordAvatar || null,
+        discordAvatar: avatarMap[s._id] || null,
         hwid: s.hwid,
         hwidFull: s.hwid,
         isActive: s.isActive,

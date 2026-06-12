@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Trash2, RefreshCw, Plus, Check, Clock, RotateCcw, Monitor, Activity } from 'lucide-react';
+import { Copy, Trash2, RefreshCw, Plus, Check, Clock, RotateCcw, Monitor, Activity, Key } from 'lucide-react';
 import { API_URL } from '../config';
 
 const KeyManagement = () => {

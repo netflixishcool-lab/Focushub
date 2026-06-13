@@ -11,7 +11,8 @@ const client = new Client({
   ]
 });
 
-const API_URL = process.env.API_URL || 'http://localhost:5000/api';
+const PORT = process.env.PORT || 5000;
+const API_URL = `http://localhost:${PORT}/api`;
 const PUBLIC_API_URL = process.env.PUBLIC_API_URL || 'https://focushub-production-145e.up.railway.app/api';
 
 // Hilfsfunktion: Script als DM in 1900-Char-Chunks senden

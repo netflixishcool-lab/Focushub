@@ -88,3 +88,8 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server auf Port ${PORT}`);
 });
+
+// Discord Bot im selben Prozess starten
+import('./discord-bot.js').catch(err => {
+  console.error('Discord Bot Fehler:', err.message);
+});

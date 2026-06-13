@@ -136,7 +136,7 @@ print("Script erfolgreich ausgeführt!")`;
 
 router.get('/list', protect, adminOnly, async (req, res) => {
   try {
-    const keys = await LicenseKey.find({ createdBy: req.user._id })
+    const keys = await LicenseKey.find({})
       .sort({ createdAt: -1 });
 
     // Für jeden Key, wenn er redeemed ist, die Discord Info vom RobloxScript holen
